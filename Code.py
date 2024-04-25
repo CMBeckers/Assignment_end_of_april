@@ -36,7 +36,7 @@ class Node:
         '''
         parents = []
         for neighbour in connections:
-            if neighbour.value < self.value:
+            if neighbour.value > self.value:
                 parents.append(neighbour)
         return parents
 
@@ -51,15 +51,20 @@ class Node:
                 children.append(neighbour)
         return children
 
+
 class queue:
     def __init__(self):
         self.queue = []
+
     def push(self, item):
         self.queue.append(item)
+
     def pop(self):
-        return self.queue.pop()
+        return self.queue.pop(0)
+
     def empty(self):
-        return len(self.queue)==0
+        return len(self.queue) == 0
+
 
 class Network:
 
@@ -75,94 +80,97 @@ class Network:
             total += item  # all items will be of type int
         return total / len(list)
 
-    def get_mean_degree(self, nodes):
+    def get_mean_degree(self):
         '''
         This function returns the mean degree of a network
         The degree of a node is the number of edges entering that node
         Returns the mean degree of every node in the network
         '''
         degrees = []
-        for node in nodes:
-            degree = 0
-            connections = np.where(np.array(node.connections) == 1)[0]
-            degree = sum(1 for connection in connections if connection != 0)
+        for node in self.nodes:
+            degree = sum(node.connections)  # Assuming node.connections contains 0/1 values representing connections
             degrees.append(degree)
-        return Network.mean(self, degrees)
+        if len(degrees) > 0:
+            return sum(degrees) / len(degrees)
+        else:
+            return 0
 
-    def get_mean_clustering(self, Network):
+    def get_mean_clustering(self):
         coefficient_per_node = []
-        '''
-        This function calculated the mean clustering coefficient of all the nodes in the network
-        Clustering means how many neighbours of a node are connected to each other and divides this by the number of possible connections 
-        Returns the mean clustering coefficient 
-        '''
-        for node in Network.nodes:
+        for node in self.nodes:
             clustering = []
-            visited = []
-            neighbour_index = node.get_neighbours()
-            number_of_neighbours = len(neighbour_index)
-            if number_of_neighbours == 0 or number_of_neighbours == 1: # clustering requires two neighbours.
+            visited = set()
+            neighbour_indices = node.get_neighbours()
+            number_of_neighbours = len(neighbour_indices)
+            if number_of_neighbours < 2: # two neighbours required for potential clustering
+                coefficient_per_node.append(0)
                 continue
             else:
-                for index_1 in neighbour_index:
-                    for index_2 in neighbour_index:
-                        neighbour_1 = Network.nodes[index_1]
-                        neighbour_2 = Network.nodes[index_2]
-                        neighbour_1_index = neighbour_1.get_neighbours()
-                        neighbour_2_index = neighbour_2.get_neighbours()
-                        if index_1 in neighbour_2_index or index_2 in neighbour_1_index:
-                            if [node.value, index_1, index_2] in visited:
-                                continue
-                            else:
+                for index_1 in neighbour_indices:
+                    for index_2 in neighbour_indices:
+                        if index_1 == index_2:
+                            continue
+                        else:
+                            neighbour_1 = self.nodes[index_1]
+                            neighbour_2 = self.nodes[index_2]
+                            neighbour_1_indices = neighbour_1.get_neighbours()
+                            neighbour_2_indices = neighbour_2.get_neighbours()
+                        if (index_1, index_2) in visited or (index_2, index_1) in visited:
+                            continue
+                        else:
+                            if index_1 in neighbour_2_indices or index_2 in neighbour_1_indices:
                                 clustering.append(1)
-                                visited.append([node.value, index_1, index_2])
-                possible_connections = (number_of_neighbours**2 - number_of_neighbours)/2
-                coefficient_per_node.append((len(clustering))/possible_connections)
-        return sum(coefficient_per_node)/len(coefficient_per_node)
+                                visited.add((index_1, index_2))
+                possible_connections = (number_of_neighbours ** 2 - number_of_neighbours) / 2
+                coefficient_per_node.append(len(clustering) / possible_connections)
+        return self.mean(coefficient_per_node)
 
-
-    def Breadth_First_Search(self, start, target, network):
+    def Breadth_First_Search(self, start, target):
         self.start_node = start
-        self.target_node = target
+        self.goal = target
         self.search_queue = queue()
         self.search_queue.push(self.start_node)
         visited = []
-
         while not self.search_queue.empty():
-            node_checking = self.search_queue.pop()
-            if node_checking == self.target_node:
+            node_to_check = self.search_queue.pop()
+            if node_to_check == self.goal:
                 break
-            for neighbour_index in node_checking.get_neighbours():
-                neighbour = network.nodes[neighbour_index]
+            for neighbour_index in node_to_check.get_neighbours():
+                neighbour = self.nodes[neighbour_index]
                 if neighbour_index not in visited:
                     self.search_queue.push(neighbour)
                     visited.append(neighbour_index)
-                    neighbour.parents = node_checking
+                    neighbour.parent = node_to_check
+        route = 0
+        if node_to_check == self.goal:
+            self.start_node.parent = None
+            while node_to_check.parent:
+                node_to_check = node_to_check.parent
+                route += 1
+        return route
 
-        node_checking = self.target_node
-        self.start_node.parents = None
-        route = []
-        while node_checking.parents:
-            route.append(node_checking)
-            node_checking = node_checking.parents
-        route.append(node_checking)
-        return len(route)
-
-    def get_mean_path_length(self, Network):
+    def get_mean_path_length(self):
         lengths = []
-        for value_1 in range(0, len(Network.nodes)-1):
-            for value_2 in range(value_1+1, len(Network.nodes)):
-                route_length = self.Breadth_First_Search(Network.nodes[value_1], Network.nodes[value_2], Network)
-                lengths.append(route_length)
-        return sum(lengths)/len(lengths)
+        means = []
+        for value_1 in range(0, len(self.nodes)-1):
+            lengths.append([])
+            for value_2 in range(0, len(self.nodes)):
+                if value_2 == value_1:
+                    continue
+                else:
+                    route_length = self.Breadth_First_Search(self.nodes[value_1], self.nodes[value_2])
+                    lengths[value_1].append(route_length)
+        for length in lengths:
+            print(length)
+            if len(length) > 0:
+                means.append((sum(length)) / (len(length)))
+        return self.mean(means)
 
     def make_random_network(self, N, connection_probability):
-
         '''
 		This function makes a *random* network of size N.
 		Each node is connected to each other node with probability p
 		'''
-
         self.nodes = []
         for node_number in range(N):
             value = np.random.random()
@@ -170,7 +178,7 @@ class Network:
             self.nodes.append(Node(value, node_number, connections))
 
         for (index, node) in enumerate(self.nodes):
-            for neighbour_index in range(index+1, N):
+            for neighbour_index in range(index + 1, N):
                 if np.random.random() < connection_probability:
                     node.connections[neighbour_index] = 1
                     self.nodes[neighbour_index].connections[index] = 1
@@ -213,7 +221,7 @@ class Network:
 def argparsing():
     show_network = False
     parser = argparse.ArgumentParser()
-    parser.add_argument("-network", action = "store_true", default=False)
+    parser.add_argument("-network", action="store_true", default=False)
     parser.add_argument("-integer", type=int, default=10)
     args = parser.parse_args()
     if args.network:
@@ -221,6 +229,7 @@ def argparsing():
     if args.integer:
         network_size = args.integer
     return show_network, network_size
+
 
 def main():
     show_network, network_size = argparsing()
@@ -233,26 +242,58 @@ def main():
         print(network.get_mean_degree(network.nodes))
 
 
+def test_networks():
+    # Ring network
+    nodes = []
+    num_nodes = 10
+    for node_number in range(num_nodes):
+        connections = [0 for val in range(num_nodes)]
+        connections[(node_number - 1) % num_nodes] = 1
+        connections[(node_number + 1) % num_nodes] = 1
+        new_node = Node(0, node_number, connections=connections)
+        nodes.append(new_node)
+    network = Network(nodes)
+
+    print("Testing ring network")
+    assert (network.get_mean_degree() == 2), network.get_mean_degree()
+    assert (network.get_mean_clustering() == 0), network.get_mean_clustering()
+    assert (network.get_mean_path_length() == 2.777777777777778), network.get_mean_path_length()
+
+    nodes = []
+    num_nodes = 10
+    for node_number in range(num_nodes):
+        connections = [0 for val in range(num_nodes)]
+        connections[(node_number + 1) % num_nodes] = 1
+        new_node = Node(0, node_number, connections=connections)
+        nodes.append(new_node)
+    network = Network(nodes)
+
+    print("Testing one-sided network")
+    assert (network.get_mean_degree() == 1), network.get_mean_degree()
+    assert (network.get_mean_clustering() == 0), network.get_mean_clustering()
+    assert (network.get_mean_path_length() == 5), network.get_mean_path_length()
+
+    nodes = []
+    num_nodes = 10
+    for node_number in range(num_nodes):
+        connections = [1 for val in range(num_nodes)]
+        connections[node_number] = 0
+        new_node = Node(0, node_number, connections=connections)
+        nodes.append(new_node)
+    network = Network(nodes)
+
+    print("Testing fully connected network")
+    assert (network.get_mean_degree() == num_nodes - 1), network.get_mean_degree()
+    assert (network.get_mean_clustering() == 1), network.get_mean_clustering()
+    assert (network.get_mean_path_length() == 1), network.get_mean_path_length()
+
+    print("All tests passed")
 
 
 A = Network()
 A.make_random_network(10, 0.8)
 A.plot()
 
-
 if __name__ == "__main__":
+    test_networks()
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
