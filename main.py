@@ -210,8 +210,20 @@ class Network:
                     node.connections[neighbor_index] = 1
                     self.nodes[neighbor_index].connections[index] = 1
 
-    def make_small_world_network(self, N, re_wire_prob=0.2):
-        self.make_ring_network(self, N, neighbour=1)
+    def make_small_world_network(self, N, rewiring_prob=0.2):
+        self.make_ring_network(N)  # Call make_ring_network without passing self
+
+        for index in range(len(self.nodes)):
+            node = self.nodes[index]
+            connection_indexes = [indx for indx in range(N) if node.connections[indx] == 1]
+            for connection_index in connection_indexes:
+                if np.random.random() < rewiring_prob:
+                    node.connections[connection_index] = 0
+                    self.nodes[connection_index].connections[index] = 0
+
+                    random_node = np.random.choice([indx for indx in range(N) if indx != index and indx not in connection_indexes])
+                    self.nodes[random_node].connections[index] = 1
+                    node.connections[random_node] = 1
 
     def plot(self):
 
@@ -241,20 +253,78 @@ class Network:
                     ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
         plt.show()
 
+def spawn(num_people):
+    return np.random.rand(num_people)
+
+def update(opinion,beta,threshold,iterations):
+    opinion_change = []
+    for i in range(iterations):
+        n = np.random.randint(len(opinion))
+        if n == 0:
+            neighbour = n + 1
+        elif n == (len(opinion) - 1):
+            neighbour = n - 1
+        else:
+            neighbour = (n+random.choice([-1,1]))
+        difference = opinion[n] - opinion[neighbour]
+
+        if abs(difference) < threshold:
+            opinion[n] += (beta * (opinion[neighbour] - opinion[n]))
+            opinion[neighbour] += (beta * (opinion[n] - opinion[neighbour])) #most important part so far
+        opinion_change.append(opinion.copy()) #gives you a copy of the same list, not same as deep copy (compound list)
+    return opinion_change
+
+'''
+Code for task 2
+'''
+
+def plot_opinion(opinion_change, iterations, beta, threshold):
+    fig = plt.figure()
+    #first sublot
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax1.hist(opinion_change[-1], bins=10)
+    ax1.set_xlabel('Opinion')
+    ax1.set_ylabel('Number')
+    ax1.set_xticks(np.arange(0, 1.1, 0.2))
+    #second subplot
+    ax2 = fig.add_subplot(1, 2, 2)
+    ax2.plot(range(iterations), opinion_change, 'ro')
+    ax2.set_ylabel('Opinion')
+    ax2.set_xlabel('Iteration')
+    fig.suptitle(f'Coupling: {beta}, Threshold: {threshold}')
+    plt.tight_layout()
+    plt.show()
+
+def defuant_main(beta, threshold):
+    num_people = 2000
+    iterations = 50000
+    opinion_change = update(spawn(num_people), beta, threshold,iterations)
+
+def test_defuant():
+    defuant_main(0.5,0.1)
+    defuant_main(0.5, 0.1)
+    defuant_main(0.5, 0.1)
+    defuant_main(0.5, 0.1) #check threshold values they asked to put in on assignment
+
 
 def argparsing():
     show_network = False
     small_world = False
-    re-wire = False
     ring_network = False
+    defaunt = False
     parser = argparse.ArgumentParser()
     parser.add_argument("-network", action="store_true", default=False)
     parser.add_argument("-integer", type=int, default=10)
-    parser.add_argument('-small_world', dest='smallworld', metavar='N', type=int, default=10,
+    parser.add_argument('-small_world', dest='small_world',
                         help='number N of nodes in small-world network')
-    parser.add_argument('-re-wire', dest='rewire', metavar='p', type=float, default=0.2,
+    parser.add_argument("alpha", type=int, default=10)
+    parser.add_argument('-re-wire', dest='re_wire', metavar='p', type=float,
                         help='value p of rewiring probability')
     parser.add_argument("-ring_network", type=int, default=10)
+    parser.add_argument("-beta", type=int, default=10)
+    parser.add_argument("-defaunt", action="store_true")
+    parser.add_argument("-gamma", type=int)
+    parser.add_argument("-delta", type=int)
     args = parser.parse_args()
     if args.network:
         show_network = True
@@ -262,31 +332,45 @@ def argparsing():
         network_size = args.integer
     if args.small_world:
         small_world = True
-    if args.re-wire:
-        re-wire = True
+    if args.alpha:
+        small_world_size = args.alpha
+    if args.re_wire:
+        re_wire_size = args.re_wire
     if args.ring_network:
         ring_network = True
-    return show_network, network_size, small_world, re-wire
+    if args.defaunt:
+        defaunt = True
+    if args.gamma:
+        defaunt_size = args.gamma
+    if args.beta:
+        ring_network_size = args.beta
+    if args.delta:
+        threshold = args.delta
+
+    return show_network, network_size, small_world, small_world_size, re_wire_size,
+    ring_network, ring_network_size, defaunt, defaunt_size, threshold
 
 
 def main():
-    show_network, network_size, small_world, re-wire = argparsing()
+    (show_network, network_size, small_world,small_world_size,
+     re_wire_size, ring_network, ring_network_size, defaunt, defaunt_size, threshold) = argparsing()
     if show_network:
         prob = random.randint(1, 10) / 10
         network = Network()
         network.make_random_network(network_size, prob)
-        print(network.get_mean_path_length(network))
-        print(network.get_mean_clustering(network))
-        print(network.get_mean_degree(network.nodes))
+        print(network.get_mean_path_length())
+        print(network.get_mean_clustering())
+        print(network.get_mean_degree())
     if small_world:
-        if re-wire: # using specific rewiring value
-            network = Network()
-            network.make_small_world_network()
-        else:
-            continue
-    if small_world: # using default rewire value
         network = Network()
-        network.make_small_world_network()
+        network.make_small_world_network(small_world_size)
+        if re_wire_size: # using specific rewiring value
+            network.make_small_world_network(re_wire_size)
+    if ring_network:
+        network = Network()
+        network.make_ring_network(ring_network_size)
+    if defaunt:
+        defuant_main(defaunt_size)
 
 
 
