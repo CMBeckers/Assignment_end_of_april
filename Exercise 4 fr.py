@@ -40,24 +40,38 @@ class Network:
                     node.connections[neighbour_index] = 1
                     self.nodes[neighbour_index].connections[index] = 1
 
-    def make_ring_network(self, N, neighbour_range=1):
+    def make_ring_network(self, NR, neighbour_range=1):
         self.nodes = []
-        for node_number in range(N):
+        for node_index in range(NR):
             value = np.random.random()
-            connections = [0 for _ in range(N)]
-            self.nodes.append(Node(value, node_number, connections))
+            connections = [0 for _ in range(NR)]
+            self.nodes.append(Node(value, node_index, connections))
 
         for (index, node) in enumerate(self.nodes):
             for offset in range(-neighbour_range, neighbour_range + 1):
                 if offset != 0 : #Skip connecting a node to itself
-                    neighbor_index = (index + offset) % N
+                    neighbor_index = (index + offset) % NR
                     node.connections[neighbor_index] = 1
                     self.nodes[neighbor_index].connections[index] = 1
 
 
-    def make_small_world_network(self, N, re_wire_prob=0.2):
-        make_ring_network(self, N, neighbour = 1)
-    # Your code for task 4 goes here
+    def make_small_world_network(self, N, rewiring_prob=0.2):
+        self.make_ring_network(N)  # Call make_ring_network without passing self
+
+        for index in range(len(self.nodes)):
+            node = self.nodes[index]
+            connection_indexes = [indx for indx in range(N) if node.connections[indx] == 1]
+            for connection_index in connection_indexes:
+                if np.random.random() < rewiring_prob:
+                    node.connections[connection_index] = 0
+                    self.nodes[connection_index].connections[index] = 0
+
+                    random_node = np.random.choice([indx for indx in range(N) if indx != index and indx not in connection_indexes])
+                    self.nodes[random_node].connections[index] = 1
+                    node.connections[random_node] = 1
+
+
+
 
     def plot(self):
 
@@ -144,18 +158,34 @@ This section contains code for the main function- you should write some code for
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
-    # parser.add_argument('-ring_network', dest='ring', metavar='N', type=int, default = 10, help='number N of nodes in ring network')
-    parser.add_argument('-small_world', dest='smallworld', metavar='N', type=int, default=10,
-                        help='number N of nodes in small-world network')
-    parser.add_argument('-re-wire', dest='rewire', metavar='p', type=float, default=0.2,
-                        help='value p of rewiring probability')
+    parser.add_argument('-ring_network', dest='ring', metavar='NR', type=int, default = 0, help='number N of nodes in ring network')
+    parser.add_argument('-small_world', dest='smallworld', metavar='N', type=int, default=10, help='number N of nodes in small-world network')
+    parser.add_argument('-re-wire', dest='rewire', metavar='p', type=float, default=0.2, help='value p of rewiring probability')
 
     args = parser.parse_args()
 
+    NR = args.ring
+    N = args.smallworld
+    rewiring_prob = args.rewire
+
+    network = Network()  # Initialize an empty network
+
+    if NR > 0:
+        # Create a ring network with NR nodes
+        network.make_ring_network(NR)
+        print(f"Creating ring network with {NR} nodes")
+    elif N > 0:
+        # Create a small-world network with N nodes and rewiring probability rewiring_prob
+        network.make_small_world_network(N, rewiring_prob)
+        print(f"Creating small-world network with {N} nodes and rewiring probability {rewiring_prob}")
+
+    # Plot the generated network
+    network.plot()
+    plt.show()  # Display the plot
     # Parameters
-    n_nodes = args.smallworld  # Number of nodes
-    k_neighbors = 2  # Number of nearest neighbors to connect initially
+    N = args.smallworld  # Number of nodes
     rewiring_prob = args.rewire  # Probability of rewiring each edge
+    NR = args.ring
 
 # You should write some code for handling flags here
 
