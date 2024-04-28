@@ -4,6 +4,7 @@ import matplotlib.cm as cm
 import sys
 import random
 import argparse
+import math
 
 
 class Node:
@@ -253,6 +254,102 @@ class Network:
                     ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
         plt.show()
 
+'''
+code for task 1
+'''
+def get_ops(population, i, j):
+	x, y = population.shape
+	neighbour_opinions = []
+	neighbour_opinions.append(population[i-1, j])
+	neighbour_opinions.append(population[(i+1)%x, j])
+	neighbour_opinions.append(population[i, (j+1)%y])
+	neighbour_opinions.append(population[i, j-1])
+	return neighbour_opinions
+
+'''
+Function fo find the neighbours above, below, to the left and to the 
+right of each cell. The code makes sure to wrap around the grid to 
+make sure cells on the edge still have four neighbours 
+'''
+
+def calculate_agreement(population, row, col, external=0.0):
+    current_value = population[row, col]
+    total_agreement = 0
+    opinion_list = get_ops(population, row, col)
+    for opinion in opinion_list:
+        total_agreement += current_value * opinion
+    total_agreement += external * current_value
+    return total_agreement
+
+'''
+Function to calculate the level of agreement between a cell and 
+its neighbours
+'''
+
+def ising_step(population, external=0.0, alpha=10):
+	n_rows, n_cols = population.shape
+	row = np.random.randint(0, n_rows)
+	col = np.random.randint(0, n_cols)
+	agreement = calculate_agreement(population, row, col, external=0.0)
+
+	if agreement < 0:
+		population[row, col] *= -1
+	elif alpha:
+		p = math.e ** (-agreement / alpha)
+		if random.random() < p:
+			population[row, col] *= -1
+
+'''
+Performs a single update of the ising function by choosing a 
+random cell and updating its value based on the calculation of 
+the agreement of its neighbours
+'''
+
+def plot_ising(im, population):
+	new_im = np.array([[255 if val == -1 else 1 for val in rows] for rows in population], dtype=np.int8)
+	im.set_data(new_im)
+	plt.pause(0.1)
+
+'''
+Displays the ising model
+'''
+
+def test_ising():
+    '''
+    This function will test the calculate_agreement function in the Ising model
+    '''
+
+    print("Testing ising model calculations")
+    population = -np.ones((3, 3))
+    assert(calculate_agreement(population,1,1)==4), "Test 1"
+
+    population[1, 1] = 1.
+    assert(calculate_agreement(population,1,1)==-4), "Test 2"
+
+    population[0, 1] = 1.
+    assert(calculate_agreement(population,1,1)==-2), "Test 3"
+
+    population[1, 0] = 1.
+    assert(calculate_agreement(population,1,1)==0), "Test 4"
+
+    population[2, 1] = 1.
+    assert(calculate_agreement(population,1,1)==2), "Test 5"
+
+    population[1, 2] = 1.
+    assert(calculate_agreement(population,1,1)==4), "Test 6"
+
+    "Testing external pull"
+    population = -np.ones((3, 3))
+    assert(calculate_agreement(population,1,1,1)==3), "Test 7"
+    assert(calculate_agreement(population,1,1,-1)==5), "Test 8"
+    assert(calculate_agreement(population,1,1,10)==-6), "Test 9"
+    assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
+
+    print("Tests passed")
+
+'''
+Code for task 2
+'''
 def spawn(num_people):
     return np.random.rand(num_people)
 
@@ -274,9 +371,7 @@ def update(opinion,beta,threshold,iterations):
         opinion_change.append(opinion.copy()) #gives you a copy of the same list, not same as deep copy (compound list)
     return opinion_change
 
-'''
-Code for task 2
-'''
+
 
 def plot_opinion(opinion_change, iterations, beta, threshold):
     fig = plt.figure()
@@ -308,69 +403,66 @@ def test_defuant():
 
 
 def argparsing():
-    show_network = False
-    small_world = False
-    ring_network = False
-    defaunt = False
     parser = argparse.ArgumentParser()
-    parser.add_argument("-network", action="store_true", default=False)
-    parser.add_argument("-integer", type=int, default=10)
-    parser.add_argument('-small_world', dest='small_world',
-                        help='number N of nodes in small-world network')
-    parser.add_argument("alpha", type=int, default=10)
-    parser.add_argument('-re-wire', dest='re_wire', metavar='p', type=float,
-                        help='value p of rewiring probability')
-    parser.add_argument("-ring_network", type=int, default=10)
-    parser.add_argument("-beta", type=int, default=10)
-    parser.add_argument("-defaunt", action="store_true")
-    parser.add_argument("-gamma", type=int)
-    parser.add_argument("-delta", type=int)
+
+    parser.add_argument("-network", type=int, nargs='?', const=10, default=False,
+                        help='Number of nodes in a random network (default: 10)')
+    parser.add_argument('-small_world', dest='small_world', type=int, nargs='?', const=10, default=False,
+                        help='Number of nodes in a small-world network (default: 10)')
+    parser.add_argument('-re-wire', dest='re_wire', metavar='p', type=float, nargs='?', const=0.2, default=False,
+                        help='Rewiring probability for small-world network (default: 0.2)')
+    parser.add_argument("-ring_network", type=int, nargs='?', const=10, default=False,
+                        help='Number of nodes in a ring network (default: 10)')
+    parser.add_argument("-defuant", default=False, nargs='?',
+                        help='Run the defuant model with optional parameters: -beta <value>, -threshold <value>')
+    parser.add_argument("-beta", type=float, nargs='?', default=False, const=10)
+    parser.add_argument("-threshold", type=float, nargs='?', const=0.2, default=False)
+    parser.add_argument("-test_defuant", action='store_true',
+                        help='Run test functions for the defuant model')
+
     args = parser.parse_args()
-    if args.network:
-        show_network = True
-    if args.integer:
-        network_size = args.integer
-    if args.small_world:
-        small_world = True
-    if args.alpha:
-        small_world_size = args.alpha
-    if args.re_wire:
-        re_wire_size = args.re_wire
-    if args.ring_network:
-        ring_network = True
-    if args.defaunt:
-        defaunt = True
-    if args.gamma:
-        defaunt_size = args.gamma
-    if args.beta:
-        ring_network_size = args.beta
-    if args.delta:
-        threshold = args.delta
 
-    return show_network, network_size, small_world, small_world_size, re_wire_size,
-    ring_network, ring_network_size, defaunt, defaunt_size, threshold
-
+    return args
 
 def main():
-    (show_network, network_size, small_world,small_world_size,
-     re_wire_size, ring_network, ring_network_size, defaunt, defaunt_size, threshold) = argparsing()
-    if show_network:
+    args = argparsing()
+
+    if args.network:
+        network_size = args.network
         prob = random.randint(1, 10) / 10
         network = Network()
         network.make_random_network(network_size, prob)
+        print("Random Network:")
         print(network.get_mean_path_length())
         print(network.get_mean_clustering())
         print(network.get_mean_degree())
-    if small_world:
+
+    if args.small_world:
+        network_size = args.small_world
+        re_wire_size = args.re_wire
         network = Network()
-        network.make_small_world_network(small_world_size)
-        if re_wire_size: # using specific rewiring value
-            network.make_small_world_network(re_wire_size)
-    if ring_network:
+        network.make_small_world_network(network_size, re_wire_size)
+        print("Small-World Network:")
+        print(network.get_mean_path_length())
+        print(network.get_mean_clustering())
+        print(network.get_mean_degree())
+
+    if args.ring_network:
+        ring_network_size = args.ring_network
         network = Network()
         network.make_ring_network(ring_network_size)
-    if defaunt:
-        defuant_main(defaunt_size)
+        print("Ring Network:")
+        print(network.get_mean_path_length())
+        print(network.get_mean_clustering())
+        print(network.get_mean_degree())
+
+    if args.defuant:
+        defuant_main(args.beta, args.threshold)
+
+
+
+    if args.test_defuant:
+        test_defuant()
 
 
 
@@ -425,5 +517,7 @@ def test_networks():
 
 if __name__ == "__main__":
     test_networks()
+    test_defuant()
+    test_ising()
     main()
 
