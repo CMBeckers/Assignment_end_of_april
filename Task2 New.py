@@ -1,6 +1,8 @@
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+
 
 def spawn(num_people):
     return np.random.rand(num_people)
@@ -41,18 +43,34 @@ def plot_opinion(opinion_change, iterations, beta, threshold):
     plt.show()
 
 def defuant_main(beta, threshold):
-    num_people = 2000
-    iterations = 50000
+    num_people = 100
+    iterations = 10000
     opinion_change = update(spawn(num_people), beta, threshold,iterations)
+    plot_opinion(opinion_change,iterations,beta,threshold)
 
 def test_defuant():
-    defuant_main(0.5,0.1)
+    defuant_main(0.5,0.5)
+    defuant_main(0.1, 0.5)
     defuant_main(0.5, 0.1)
-    defuant_main(0.5, 0.1)
-    defuant_main(0.5, 0.1) #check threshold values they asked to put in on assignment
+    defuant_main(0.1, 0.2) #check threshold values they asked to put in on assignment
 
 def main():
-    #need to put something to do with arg
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-beta", type=float, default=0.2,
+                        help="Set Beta: . Default: 0.2")
+    parser.add_argument("-threshold", type=float, default=0.2,
+                        help="Set Threshold. Default: 0.2")
+    parser.add_argument("-defuant",
+                        help="Run Defuant Model.", action="store_true")
+    parser.add_argument("-test_defuant",
+                        help="Run Test Model.", action="store_true")
+    args = parser.parse_args()
+
+    if args.defuant:
+        defuant_main(args.beta, args.threshold)
+    if args.test_defuant:
+        test_defuant()
+
 
 if __name__ == "__main__":
     main()
