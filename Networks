@@ -1,0 +1,265 @@
+#Import required modules
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import argparse
+
+
+#define class for node
+class Node:
+    #each node has an assigned index, a value and a amount of connections to other nodes
+    def __init__(self, value, number, connections=None):
+        self.index = number
+        self.connections = connections
+        self.value = value
+
+#define class for the different networks
+class Network:
+    #each network is made up of a given number of nodes
+    def __init__(self, nodes=None):
+        #takes given list of nodes in network
+        #if no list is given an empty list is initialised
+        if nodes is None:
+            self.nodes = []
+        #if list provided, initialises provided list for nodes
+        else:
+            self.nodes = nodes
+
+
+    #equation to create a random network of size N nodes, with a probability p to connect to other nodes
+    def make_random_network(self, N, connection_probability):
+        """
+        This function makes a network with connections between each node and its corresponding neighbouring nodes in a
+        range of one. The connections are defined by connection lists of ones and zeroes, where a one represents a
+        connection and a zero represents no connection. The position of each value in the list represents the index of
+        each node, therefore, the positions stay consistent in each list.
+
+        Input: self (current instance of the class), number of nodes N, connection probability between nodes
+        Output: random network composed of lists, describing the connections of each individual node to other nodes
+        """
+
+
+        #initialise an empty list to contain the nodes of the network
+        self.nodes = []
+
+        #creates a number of N nodes
+        for node_number in range(N):
+            #assigns value between 0 and 1 to each node
+            value = np.random.random()
+            #initialises a list of connections between each node and current node, in the form of a list of zeros with length N.
+            #Each list element will express wether current node is connected to corresponding node in network
+            connections = [0 for _ in range(N)]
+            #create new node object with assigned value, 'node_number' as index and 'connections' list, stating the connections to other nodes
+            self.nodes.append(Node(value, node_number, connections))
+
+        #iterate over each node in network and its corresponding index
+        for (index, node) in enumerate(self.nodes):
+            #iterates over indeces of potential neighbouring nodes of current node and avoids iterating over itself and out of range neighbors with range(index + 1, N)
+            for neighbour_index in range(index + 1, N):
+                #determines whether or not current node is connected to its neighbour by generating a random number between 0 and 1. If the generated number is less than the probability, the if operator holds.
+                if np.random.random() < connection_probability:
+                    #sets value at the neighbour index position in the connections list to 1
+                    node.connections[neighbour_index] = 1
+                    #sets value at index position in connections list of neighbouring node to 1
+                    self.nodes[neighbour_index].connections[index] = 1
+
+    
+    def make_ring_network(self, NR, neighbour_range=1):
+        """
+        This function creates a ring network of size NR nodes with each node connected to its immediate neighbours on 
+        each side. Like the random network function, it uses lists to represent the connections between each node and
+        its immediate neighbours, where zeroes represent no connection and ones represent a connection. Here again, the
+        position of each element in the lists represent the node index, therefore, the positioning stays consistent.
+
+        Input: self (current instance of the class), number of nodes NR, neighbour_range (here indicating the immediate
+        neighbours)
+        Output: ring network composed of lists, describing the connections of each individual node to other nodes
+        """
+
+        self.nodes = []
+
+        #for loop iterates over each node and makes a connections list for each node with no connections to other nodes
+        for node_index in range(NR):
+            value = np.random.random()
+            connections = [0 for _ in range(NR)] #no connections are indicated as only zeroes in the list
+            #new node object is created storing the value, index and connections of each node
+            self.nodes.append(Node(value, node_index, connections))
+
+        #first for loop iterates over each node in the network and accesses its index
+        for (index, node) in enumerate(self.nodes):
+            #nested for loop determines the neighbours of the current node but also iterates over itself
+            for offset in range(-neighbour_range, neighbour_range + 1):
+                if offset != 0 : #Skip connecting a node to itself
+                    neighbor_index = (index + offset) % NR #calculates neigbouring nodes indices
+                    node.connections[neighbor_index] = 1 #updates connection list by making neighbouring zeroes to ones
+                    self.nodes[neighbor_index].connections[index] = 1 #updates connection lists of all appropriate nodes
+
+
+    #creates a small world network of size N nodes, with a default re-wiring probability 0.2
+    def make_small_world_network(self, N, rewiring_prob=0.2):
+        """
+        This function uses the ring network function to create a small world network of size N nodes with a default
+        probability of 0.2 to re-wire the connections between the nodes.
+        Input: number of nodes N, re-wiring probability between nodes (with a default value of 0.2 unless different
+        value is parsed)
+        Input: self (current instance of the class), number of nodes N, rewiring_pron (here indicating the probability
+        that each individual connections will be re-wired (default probability set to 0.2))
+        Output: small world network composed of lists, describing the connections of each individual node to other nodes
+        """
+        self.make_ring_network(N)  #create base structure for network with make_ring_network function of size N nodes
+
+        #iterates over each node in network and stores node information in the variable node
+        for index in range(len(self.nodes)):
+            node = self.nodes[index]
+            #iterates over connection list of current node and stores indices of nodes it is connected to in new list
+            connection_indexes = [indx for indx in range(N) if node.connections[indx] == 1]
+            for connection_index in connection_indexes:
+                if np.random.random() < rewiring_prob:
+                    #when if statement holds, the connection at hand is removed and the connections list is updated
+                    node.connections[connection_index] = 0
+                    self.nodes[connection_index].connections[index] = 0
+
+                    #randomly selects new node to connect to besides itself and the nodes already connected to
+                    random_node = np.random.choice([indx for indx in range(N) if indx != index and indx not in connection_indexes])
+                    #connects current node to randomly selected node and updates connections list
+                    self.nodes[random_node].connections[index] = 1
+                    node.connections[random_node] = 1
+
+
+    #visualises the network in circular form with node positions and connections stored in self.nodes
+    def plot(self):
+        """
+        This function visualises the networks created by the previous functions by using the information of each
+        individual node to determine the nodes' position and connections to other nodes.
+        Input: node positions and connections of selected network
+        Output: visualised network in circular form
+        """
+
+        fig = plt.figure() #create figure with matplotlib
+        ax = fig.add_subplot(111) #create subplot within figure
+        ax.set_axis_off() #deactivate the display of axes on plot
+
+        #determine size of network from number of nodes
+        num_nodes = len(self.nodes)
+        network_radius = num_nodes * 10 #determine radius of network to establish limits for x and y axes of plot
+        ax.set_xlim([-1.1 * network_radius, 1.1 * network_radius]) #set limits for x axis based on radius
+        ax.set_ylim([-1.1 * network_radius, 1.1 * network_radius]) #set limits for y axis based on radius
+
+        #looks at properties of each node (index, value and connections)
+        for (i, node) in enumerate(self.nodes):
+            #calculate x and y position of each node from its index and the total number of nodes
+            node_angle = i * 2 * np.pi / num_nodes
+            node_x = network_radius * np.cos(node_angle)
+            node_y = network_radius * np.sin(node_angle)
+
+            #create circle representing each node on the plot
+            circle = plt.Circle((node_x, node_y), 0.3 * num_nodes, color=cm.hot(node.value)) #circle is centered around x and y values of each node, has a radius of 0.3 units and has a colour assigned to it based on node's value attribute
+            ax.add_patch(circle) # adds circle to the plot
+
+            #draw connections between the connected nodes
+            for neighbour_index in range(i + 1, num_nodes):
+                #iterates through each node and checks if there is a connection between current node and its neighbour
+                if node.connections[neighbour_index]:
+                    #if a connection is found, x and y position of neighbor and angle of the connecting line is calculated
+                    neighbour_angle = neighbour_index * 2 * np.pi / num_nodes
+                    neighbour_x = network_radius * np.cos(neighbour_angle)
+                    neighbour_y = network_radius * np.sin(neighbour_angle)
+
+                    #connecting line is drawn between connected nodes with ax.plot in colour black
+                    ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
+
+
+#runs tests to determine correctness of functions generating the networks
+def test_networks():
+    # Ring network
+    nodes = []
+    num_nodes = 10
+    for node_number in range(num_nodes):
+        connections = [0 for val in range(num_nodes)]
+        connections[(node_number - 1) % num_nodes] = 1
+        connections[(node_number + 1) % num_nodes] = 1
+        new_node = Node(0, node_number, connections=connections)
+        nodes.append(new_node)
+    network = Network(nodes)
+
+    print("Testing ring network")
+    assert (network.get_mean_degree() == 2), network.get_mean_degree()
+    assert (network.get_clustering() == 0), network.get_clustering()
+    assert (network.get_path_length() == 2.777777777777778), network.get_path_length()
+
+    nodes = []
+    num_nodes = 10
+    for node_number in range(num_nodes):
+        connections = [0 for val in range(num_nodes)]
+        connections[(node_number + 1) % num_nodes] = 1
+        new_node = Node(0, node_number, connections=connections)
+        nodes.append(new_node)
+    network = Network(nodes)
+
+    print("Testing one-sided network")
+    assert (network.get_mean_degree() == 1), network.get_mean_degree()
+    assert (network.get_clustering() == 0), network.get_clustering()
+    assert (network.get_path_length() == 5), network.get_path_length()
+
+    nodes = []
+    num_nodes = 10
+    for node_number in range(num_nodes):
+        connections = [1 for val in range(num_nodes)]
+        connections[node_number] = 0
+        new_node = Node(0, node_number, connections=connections)
+        nodes.append(new_node)
+    network = Network(nodes)
+
+    print("Testing fully connected network")
+    assert (network.get_mean_degree() == num_nodes - 1), network.get_mean_degree()
+    assert (network.get_clustering() == 1), network.get_clustering()
+    assert (network.get_path_length() == 1), network.get_path_length()
+
+    print("All tests passed")
+
+
+'''
+==============================================================================================================
+This section contains code for the main function- you should write some code for handling flags here
+==============================================================================================================
+'''
+
+#takes command-line arguments entered in terminal and enters them into the functions as required
+def main():
+    #initialise parser
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    #create flag for ring network with default value of NR = 0, so no ring network is created unless called
+    parser.add_argument('-ring_network', dest='ring', metavar='NR', type=int, default = 0, help='number N of nodes in ring network')
+    #create flag for small world network with default value of N = 10
+    parser.add_argument('-small_world', dest='smallworld', metavar='N', type=int, default=10, help='number N of nodes in small-world network')
+    #create flag for the re-wiring probability of the small world network with default value of p = 0.2
+    parser.add_argument('-re_wire', dest='rewire', metavar='p', type=float, default=0.2, help='value p of rewiring probability')
+
+    args = parser.parse_args()
+
+    #assign parsed arguments to parameters in the functions
+    NR = args.ring
+    N = args.smallworld
+    rewiring_prob = args.rewire
+
+    #initialise an empty network
+    network = Network()
+
+    #initialise required functions depending on which arguments are parsed
+    if NR > 0:
+        #create a ring network with NR nodes
+        network.make_ring_network(NR)
+        print(f"Creating ring network with {NR} nodes")
+    elif N > 0:
+        #create a small-world network with N nodes and rewiring probability rewiring_prob
+        network.make_small_world_network(N, rewiring_prob)
+        print(f"Creating small-world network with {N} nodes and rewiring probability {rewiring_prob}")
+
+    #plot network
+    network.plot()
+    # display the plot
+    plt.show()
+
+#ensure main function is executed
+if __name__ == "__main__":
+    main()
