@@ -141,6 +141,15 @@ This section contains code for the Ising Model - task 1 in the assignment
 '''
 
 def get_ops(population, i, j):
+	"""
+	Function to find the neighbours above, below, to the left and to the
+	right of each cell. The code makes sure to wrap around the grid to
+	make sure cells on the edge still have four neighbours
+	:param population: Grid representing the population of people
+	:param i: Represents the horizontal position of a cell
+	:param j: Represents the vertical position of a cell
+	:return: List of opinions of the surrounding neighbours of each cell
+	"""
 	x, y = population.shape
 	neighbour_opinions = []
 	neighbour_opinions.append(population[i-1, j])
@@ -149,13 +158,17 @@ def get_ops(population, i, j):
 	neighbour_opinions.append(population[i, j-1])
 	return neighbour_opinions
 
-'''
-Function fo find the neighbours above, below, to the left and to the 
-right of each cell. The code makes sure to wrap around the grid to 
-make sure cells on the edge still have four neighbours 
-'''
 
 def calculate_agreement(population, row, col, external=0.0):
+	"""
+	Function to calculate the level of agreement between a cell and
+	its neighbours
+	:param population: Grid representing the population of people
+	:param row: Row of the grid
+	:param col: Column of the grid
+	:param external: External influence on a cells voting opinion
+	:return: Total sum of the agreement of a cells neighbours
+	"""
 	current_value = population[row, col]
 	total_agreement = 0
 	opinion_list = get_ops(population, row, col)
@@ -164,12 +177,16 @@ def calculate_agreement(population, row, col, external=0.0):
 	total_agreement += external * current_value
 	return total_agreement
 
-'''
-Function to calculate the level of agreement between a cell and 
-its neighbours
-'''
 
 def ising_step(population, external=0.0, alpha=10):
+	"""
+	Performs a single update of the ising function by choosing a
+	random cell and updating its value based on the calculation of
+	the agreement of its neighbours
+	:param population: Grid representing the population of people
+	:param external: External influence on a cells voting opinion
+	:param alpha: Tolerance of those who disagree with their neighbours within the society
+	"""
 	n_rows, n_cols = population.shape
 	row = np.random.randint(0, n_rows)
 	col = np.random.randint(0, n_cols)
@@ -182,20 +199,15 @@ def ising_step(population, external=0.0, alpha=10):
 		if random.random() < p:
 			population[row, col] *= -1
 
-'''
-Performs a single update of the ising function by choosing a 
-random cell and updating its value based on the calculation of 
-the agreement of its neighbours
-'''
 
 def plot_ising(im, population):
+	'''
+	Displays the ising model
+	'''
 	new_im = np.array([[255 if val == -1 else 1 for val in rows] for rows in population], dtype=np.int8)
 	im.set_data(new_im)
 	plt.pause(0.1)
 
-'''
-Displays the ising model
-'''
 
 def test_ising():
 	'''
