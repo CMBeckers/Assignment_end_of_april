@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import sys
 import random
 import argparse
 import math
@@ -176,7 +175,6 @@ class Network:
                     route_length = self.Breadth_First_Search(self.nodes[value_1], self.nodes[value_2])
                     lengths[value_1].append(route_length)
         for length in lengths:
-            print(length)
             if len(length) > 0:
                 means.append((sum(length)) / (len(length)))
         return self.mean(means)
@@ -258,13 +256,13 @@ class Network:
 code for task 1
 '''
 def get_ops(population, i, j):
-	x, y = population.shape
-	neighbour_opinions = []
-	neighbour_opinions.append(population[i-1, j])
-	neighbour_opinions.append(population[(i+1)%x, j])
-	neighbour_opinions.append(population[i, (j+1)%y])
-	neighbour_opinions.append(population[i, j-1])
-	return neighbour_opinions
+    x, y = population.shape
+    neighbour_opinions = []
+    neighbour_opinions.append(population[i-1, j])
+    neighbour_opinions.append(population[(i+1)%x, j])
+    neighbour_opinions.append(population[i, (j+1)%y])
+    neighbour_opinions.append(population[i, j-1])
+    return neighbour_opinions
 
 '''
 Function fo find the neighbours above, below, to the left and to the 
@@ -287,17 +285,17 @@ its neighbours
 '''
 
 def ising_step(population, external=0.0, alpha=10):
-	n_rows, n_cols = population.shape
-	row = np.random.randint(0, n_rows)
-	col = np.random.randint(0, n_cols)
-	agreement = calculate_agreement(population, row, col, external=0.0)
+    n_rows, n_cols = population.shape
+    row = np.random.randint(0, n_rows)
+    col = np.random.randint(0, n_cols)
+    agreement = calculate_agreement(population, row, col, external=0.0)
 
-	if agreement < 0:
-		population[row, col] *= -1
-	elif alpha:
-		p = math.e ** (-agreement / alpha)
-		if random.random() < p:
-			population[row, col] *= -1
+    if agreement < 0:
+	    population[row, col] *= -1
+    elif alpha:
+	    p = math.e ** (-agreement / alpha)
+	    if random.random() < p:
+		    population[row, col] *= -1
 
 '''
 Performs a single update of the ising function by choosing a 
@@ -306,9 +304,9 @@ the agreement of its neighbours
 '''
 
 def plot_ising(im, population):
-	new_im = np.array([[255 if val == -1 else 1 for val in rows] for rows in population], dtype=np.int8)
-	im.set_data(new_im)
-	plt.pause(0.1)
+    new_im = np.array([[255 if val == -1 else 1 for val in rows] for rows in population], dtype=np.int8)
+    im.set_data(new_im)
+    plt.pause(0.1)
 
 '''
 Displays the ising model
@@ -371,8 +369,6 @@ def update(opinion,beta,threshold,iterations):
         opinion_change.append(opinion.copy()) #gives you a copy of the same list, not same as deep copy (compound list)
     return opinion_change
 
-
-
 def plot_opinion(opinion_change, iterations, beta, threshold):
     fig = plt.figure()
     #first sublot
@@ -391,15 +387,16 @@ def plot_opinion(opinion_change, iterations, beta, threshold):
     plt.show()
 
 def defuant_main(beta, threshold):
-    num_people = 2000
-    iterations = 50000
+    num_people = 100
+    iterations = 10000
     opinion_change = update(spawn(num_people), beta, threshold,iterations)
+    plot_opinion(opinion_change,iterations,beta,threshold)
 
 def test_defuant():
-    defuant_main(0.5,0.1)
+    defuant_main(0.5,0.5)
+    defuant_main(0.1, 0.5)
     defuant_main(0.5, 0.1)
-    defuant_main(0.5, 0.1)
-    defuant_main(0.5, 0.1) #check threshold values they asked to put in on assignment
+    defuant_main(0.1, 0.2) #check threshold values they asked to put in on assignment
 
 
 def argparsing():
@@ -413,12 +410,16 @@ def argparsing():
                         help='Rewiring probability for small-world network (default: 0.2)')
     parser.add_argument("-ring_network", type=int, nargs='?', const=10, default=False,
                         help='Number of nodes in a ring network (default: 10)')
-    parser.add_argument("-defuant", default=False, nargs='?',
+    parser.add_argument("-defuant", default=False ,action="store_true",
                         help='Run the defuant model with optional parameters: -beta <value>, -threshold <value>')
     parser.add_argument("-beta", type=float, nargs='?', default=False, const=10)
     parser.add_argument("-threshold", type=float, nargs='?', const=0.2, default=False)
     parser.add_argument("-test_defuant", action='store_true',
                         help='Run test functions for the defuant model')
+    parser.add_argument("-test_ising", action='store_true')
+    parser.add_argument("-ising_model", default=False, nargs='?')
+    parser.add_argument("-external", type=float, nargs='?', default=False, const=10)
+    parser.add_argument("-alpha", type=float, nargs='?', default=False, const=10)
 
     args = parser.parse_args()
 
@@ -457,9 +458,14 @@ def main():
         print(network.get_mean_degree())
 
     if args.defuant:
+        print(args.beta)
         defuant_main(args.beta, args.threshold)
 
-
+    if args.ising_model:
+        population = -np.ones((3, 3))
+        im = plt.imshow(population)
+        ising_step(population, args.external, args.alpha)
+        plot_ising(im, population)
 
     if args.test_defuant:
         test_defuant()
@@ -516,8 +522,5 @@ def test_networks():
 
 
 if __name__ == "__main__":
-    test_networks()
-    test_defuant()
-    test_ising()
     main()
 
