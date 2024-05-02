@@ -7,7 +7,10 @@ import argparse
 
 #define class for node
 class Node:
-    #each node has an assigned index, a value and a amount of connections to other nodes
+    """
+    This class is to hold the information of each node: That would be the nodes' index, value and its connections
+    with other nodes.
+    """
     def __init__(self, value, number, connections=None):
         self.index = number
         self.connections = connections
@@ -15,6 +18,10 @@ class Node:
 
 #define class for the different networks
 class Network:
+    """
+    This class holds the functions to create the different networks and also the function to the plot and visualise
+    the networks created.
+    """
     #each network is made up of a given number of nodes
     def __init__(self, nodes=None):
         #takes given list of nodes in network
@@ -228,8 +235,8 @@ This section contains code for the main function- you should write some code for
 def main():
     #initialise parser
     parser = argparse.ArgumentParser(description='Process some integers.')
-    #create flag for ring network with default value of NR = 0, so no ring network is created unless called
-    parser.add_argument('-ring_network', dest='ring', metavar='NR', type=int, default = 0, help='number N of nodes in ring network')
+    #create flag for ring network with default value of NR = False, so no ring network is created unless called
+    parser.add_argument('-ring_network', dest='ring', metavar='NR', type=int, const = 10, default = False, nargs = '?', help='number N of nodes in ring network')
     #create flag for small world network with default value of N = 10
     parser.add_argument('-small_world', dest='smallworld', metavar='N', type=int, default=10, help='number N of nodes in small-world network')
     #create flag for the re-wiring probability of the small world network with default value of p = 0.2
