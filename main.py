@@ -360,7 +360,7 @@ def plot_ising(im, population):
     im.set_data(new_im)
 
     # Pause to display the updated plot (adjust as needed)
-    plt.pause(1)
+    plt.pause(0.01)
 
 def run_ising_simulation(population, num_steps=100, external=0.0, alpha=10):
     """
