@@ -384,24 +384,25 @@ def run_ising_simulation(population, num_steps=100, external=0.0, alpha=10):
 '''
 Code for task 2
 '''
+#creates a random number of people used to collect opinions from
 def spawn(num_people):
     return np.random.rand(num_people)
 
 def update(opinion,beta,threshold,iterations):
-    opinion_change = []
+    opinion_change = [] #sets an empty list of opinions, which will update as the loop continues
     for i in range(iterations):
         n = np.random.randint(len(opinion))
         if n == 0:
-            neighbour = n + 1
+            neighbour = n + 1 #goes onto the next neigbour
         elif n == (len(opinion) - 1):
             neighbour = n - 1
         else:
             neighbour = (n+random.choice([-1,1]))
-        difference = opinion[n] - opinion[neighbour]
+        difference = opinion[n] - opinion[neighbour] #calculates the change in opinion between two neigbours
 
-        if abs(difference) < threshold:
+        if abs(difference) < threshold: #this will cause the opinions to be updated using the beta value given in the main function
             opinion[n] += (beta * (opinion[neighbour] - opinion[n]))
-            opinion[neighbour] += (beta * (opinion[n] - opinion[neighbour])) #most important part so far
+            opinion[neighbour] += (beta * (opinion[n] - opinion[neighbour])) 
         opinion_change.append(opinion.copy()) #gives you a copy of the same list, not same as deep copy (compound list)
     return opinion_change
 
