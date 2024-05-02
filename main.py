@@ -7,7 +7,10 @@ import math
 
 
 class Node:
-
+	"""
+ 	This class holds the information of each node: That would be the nodes' index, value, connections
+    	with other nodes, and also the neighbours, the children as well as the parents of the current node.
+  	"""
     def __init__(self, value, number, connections=None):
         self.index = number
         self.connections = connections
@@ -68,7 +71,11 @@ class queue:
 
 
 class Network:
-
+	"""
+    	This class holds the functions to create the different networks and also the function to the plot and visualise
+    	the networks created.
+    	"""
+	
     def __init__(self, nodes=None):
         if nodes is None:
             self.nodes = []
