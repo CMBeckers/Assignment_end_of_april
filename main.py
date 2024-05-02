@@ -250,7 +250,7 @@ class Network:
                     neighbour_y = network_radius * np.sin(neighbour_angle)
 
                     ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
-        plt.show()
+        plt.pause(1)
 
 '''
 code for task 1
@@ -273,6 +273,7 @@ def get_ops(population, i, j):
 	neighbour_opinions.append(population[i, j-1])
 	return neighbour_opinions
 
+
 def calculate_agreement(population, row, col, external=0.0):
 	"""
 	Function to calculate the level of agreement between a cell and
@@ -290,6 +291,7 @@ def calculate_agreement(population, row, col, external=0.0):
 		total_agreement += current_value * opinion
 	total_agreement += external * current_value
 	return total_agreement
+
 
 def ising_step(population, external=0.0, alpha=10):
 	"""
@@ -312,46 +314,40 @@ def ising_step(population, external=0.0, alpha=10):
 		if random.random() < p:
 			population[row, col] *= -1
 
+
 def plot_ising(im, population):
-	'''
-	Displays the ising model
-	'''
-	new_im = np.array([[255 if val == -1 else 1 for val in rows] for rows in population], dtype=np.int8)
-	im.set_data(new_im)
-	plt.pause(0.1)
-
-def test_ising():
     '''
-    This function will test the calculate_agreement function in the Ising model
+    Displays the ising model
     '''
+    population_array = np.array(population, dtype=np.int8)
+    new_im = np.where(population_array == -1, 255, 1).astype(np.int8)
 
-    print("Testing ising model calculations")
-    population = -np.ones((3, 3))
-    assert(calculate_agreement(population,1,1)==4), "Test 1"
+    # Update the image data (im) with the new array
+    im.set_data(new_im)
 
-    population[1, 1] = 1.
-    assert(calculate_agreement(population,1,1)==-4), "Test 2"
+    # Pause to display the updated plot (adjust as needed)
+    plt.pause(1)
 
-    population[0, 1] = 1.
-    assert(calculate_agreement(population,1,1)==-2), "Test 3"
+def run_ising_simulation(population, num_steps=100, external=0.0, alpha=10):
+    """
+    Runs the Ising simulation for a specified number of steps and updates the plot
+    :param population: Initial grid representing the population of people
+    :param num_steps: Number of simulation steps to run
+    :param external: External influence on a cell's voting opinion
+    :param alpha: Tolerance of those who disagree with their neighbours within the society
+    """
+    fig, ax = plt.subplots()
+    im = ax.imshow(population, cmap='gray', vmin=-1, vmax=1)
 
-    population[1, 0] = 1.
-    assert(calculate_agreement(population,1,1)==0), "Test 4"
+    for step in range(num_steps):
+        population_copy = np.copy(population)  # Create a copy of the population grid
+        ising_step(population_copy, external=external, alpha=alpha)  # Perform one step of Ising model
+        plot_ising(im, population_copy)  # Update the plot with the new population grid copy
+        plt.pause(0.1)  # Pause to display the updated plot
 
-    population[2, 1] = 1.
-    assert(calculate_agreement(population,1,1)==2), "Test 5"
-
-    population[1, 2] = 1.
-    assert(calculate_agreement(population,1,1)==4), "Test 6"
-
-    "Testing external pull"
-    population = -np.ones((3, 3))
-    assert(calculate_agreement(population,1,1,1)==3), "Test 7"
-    assert(calculate_agreement(population,1,1,-1)==5), "Test 8"
-    assert(calculate_agreement(population,1,1,10)==-6), "Test 9"
-    assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
-
-    print("Tests passed")
+        # Update the original population grid after each step
+        population[:] = population_copy
+        plt.pause(0.1)
 
 '''
 Code for task 2
@@ -400,84 +396,95 @@ def defuant_main(beta, threshold):
     opinion_change = update(spawn(num_people), beta, threshold,iterations)
     plot_opinion(opinion_change,iterations,beta,threshold)
 
+'''
+code for task 5
+'''
+def spawning(num_people):
+    return np.random.rand(num_people)
+
+def mean(list):
+    total = 0
+    for item in list:
+        total += item  # all items will be of type int
+    return total / len(list)
+
+def updating(network, beta, threshold, iterations):
+    opinion_change = []
+
+    for i in range(iterations):
+        opinion_snapshot = []
+
+        for node in network.nodes:
+            try:
+                neighbour_index = random.choice(node.get_neighbours())
+                neighbour = network.nodes[neighbour_index]
+                difference = node.value - neighbour.value
+
+                if abs(difference) < threshold:
+                    node.value += beta * (neighbour.value - node.value)
+                    neighbour.value += beta * (node.value - neighbour.value)
+
+                opinion_snapshot.append(node.value)
+
+            except IndexError:
+                opinion_snapshot.append(node.value)
+
+        opinion_change.append(opinion_snapshot)
+
+        if i % 10 == 0:
+            network.plot()  # Display network plot every 10 iterations
+    plot_opinions_over_time(opinion_change)
+    return opinion_change
+
+
+def plot_opinions(opinion_change, iterations, beta, threshold):
+    fig = plt.figure()
+    #first sublot
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax1.hist(opinion_change[-1], bins=10)
+    ax1.set_xlabel('Opinion')
+    ax1.set_ylabel('Number')
+    ax1.set_xticks(np.arange(0, 1.1, 0.2))
+    #second subplot
+    ax2 = fig.add_subplot(1, 2, 2)
+    ax2.plot(range(iterations), opinion_change, 'ro')
+    ax2.set_ylabel('Opinion')
+    ax2.set_xlabel('Iteration')
+    fig.suptitle(f'Coupling: {beta}, Threshold: {threshold}')
+    plt.tight_layout()
+    plt.pause(1)
+
+def plot_opinions_over_time(opinions_over_time):
+    means = [mean(opinion) for opinion in opinions_over_time]
+    time = []
+    for value in range(0, len(opinions_over_time)):
+        time.append(value)
+    plt.plot(time, means)
+    plt.xlabel('Iteration')
+    plt.ylabel('Mean Opinion')
+    plt.title('Mean Opinion over Time')
+    plt.show()
+def defuant_main_task_5(network_size, beta, threshold):
+    iterations = 100
+    rewiring_prob = random.randint(1, 10)/10
+    network = Network()
+    network.make_small_world_network(network_size, rewiring_prob)
+    opinion_change = updating(network, beta, threshold, iterations)
+    plot_opinions_over_time(opinion_change)
+
+
+def test_defuant_task_5():
+    network_size = 100
+    defuant_main_task_5(network_size, 0.5,0.5)
+    defuant_main_task_5(network_size, 0.1, 0.5)
+    defuant_main_task_5(network_size,0.5, 0.1)
+    defuant_main_task_5(network_size, 0.1, 0.2)
+
 def test_defuant():
     defuant_main(0.5,0.5)
     defuant_main(0.1, 0.5)
     defuant_main(0.5, 0.1)
     defuant_main(0.1, 0.2) #check threshold values they asked to put in on assignment
-
-
-def argparsing():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-network", type=int, nargs='?', const=10, default=False,
-                        help='Number of nodes in a random network (default: 10)')
-    parser.add_argument('-small_world', dest='small_world', type=int, nargs='?', const=10, default=False,
-                        help='Number of nodes in a small-world network (default: 10)')
-    parser.add_argument('-re-wire', dest='re_wire', metavar='p', type=float, nargs='?', const=0.2, default=False,
-                        help='Rewiring probability for small-world network (default: 0.2)')
-    parser.add_argument("-ring_network", type=int, nargs='?', const=10, default=False,
-                        help='Number of nodes in a ring network (default: 10)')
-    parser.add_argument("-defuant", default=False ,action="store_true",
-                        help='Run the defuant model with optional parameters: -beta <value>, -threshold <value>')
-    parser.add_argument("-beta", type=float, nargs='?', default=False, const=10)
-    parser.add_argument("-threshold", type=float, nargs='?', const=0.2, default=False)
-    parser.add_argument("-test_defuant", action='store_true',
-                        help='Run test functions for the defuant model')
-    parser.add_argument("-test_ising", action='store_true')
-    parser.add_argument("-ising_model", default=False, nargs='?')
-    parser.add_argument("-external", type=float, nargs='?', default=False, const=10)
-    parser.add_argument("-alpha", type=float, nargs='?', default=False, const=10)
-
-    args = parser.parse_args()
-
-    return args
-
-def main():
-    args = argparsing()
-
-    if args.network:
-        network_size = args.network
-        prob = random.randint(1, 10) / 10
-        network = Network()
-        network.make_random_network(network_size, prob)
-        print("Random Network:")
-        print(network.get_mean_path_length())
-        print(network.get_mean_clustering())
-        print(network.get_mean_degree())
-
-    if args.small_world:
-        network_size = args.small_world
-        re_wire_size = args.re_wire
-        network = Network()
-        network.make_small_world_network(network_size, re_wire_size)
-        print("Small-World Network:")
-        print(network.get_mean_path_length())
-        print(network.get_mean_clustering())
-        print(network.get_mean_degree())
-
-    if args.ring_network:
-        ring_network_size = args.ring_network
-        network = Network()
-        network.make_ring_network(ring_network_size)
-        print("Ring Network:")
-        print(network.get_mean_path_length())
-        print(network.get_mean_clustering())
-        print(network.get_mean_degree())
-
-    if args.defuant:
-        print(args.beta)
-        defuant_main(args.beta, args.threshold)
-
-    if args.ising_model:
-        population = -np.ones((3, 3))
-        im = plt.imshow(population)
-        ising_step(population, args.external, args.alpha)
-        plot_ising(im, population)
-
-    if args.test_defuant:
-        test_defuant()
-
 
 
 
@@ -527,6 +534,115 @@ def test_networks():
     assert (network.get_mean_path_length() == 1), network.get_mean_path_length()
 
     print("All tests passed")
+
+def test_ising():
+    '''
+    This function will test the calculate_agreement function in the Ising model
+    '''
+
+    print("Testing ising model calculations")
+    population = -np.ones((3, 3))
+    assert(calculate_agreement(population,1,1)==4), "Test 1"
+
+    population[1, 1] = 1.
+    assert(calculate_agreement(population,1,1)==-4), "Test 2"
+
+    population[0, 1] = 1.
+    assert(calculate_agreement(population,1,1)==-2), "Test 3"
+
+    population[1, 0] = 1.
+    assert(calculate_agreement(population,1,1)==0), "Test 4"
+
+    population[2, 1] = 1.
+    assert(calculate_agreement(population,1,1)==2), "Test 5"
+
+    population[1, 2] = 1.
+    assert(calculate_agreement(population,1,1)==4), "Test 6"
+
+    "Testing external pull"
+    population = -np.ones((3, 3))
+    assert(calculate_agreement(population,1,1,1)==3), "Test 7"
+    assert(calculate_agreement(population,1,1,-1)==5), "Test 8"
+    assert(calculate_agreement(population,1,1,10)==-6), "Test 9"
+    assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
+
+    print("Tests passed")
+def argparsing():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-network", type=int, nargs='?', const=10, default=False,
+                        help='Number of nodes in a random network (default: 10)')
+    parser.add_argument('-small_world', dest='small_world', type=int, nargs='?', const=10, default=False,
+                        help='Number of nodes in a small-world network (default: 10)')
+    parser.add_argument('-re-wire', dest='re_wire', metavar='p', type=float, nargs='?', const=0.2, default=False,
+                        help='Rewiring probability for small-world network (default: 0.2)')
+    parser.add_argument("-ring_network", type=int, nargs='?', const=10, default=False,
+                        help='Number of nodes in a ring network (default: 10)')
+    parser.add_argument("-defuant", default=False ,action="store_true",
+                        help='Run the defuant model with optional parameters: -beta <value>, -threshold <value>')
+    parser.add_argument("-beta", type=float, nargs='?', default=False, const=0.2)
+    parser.add_argument("-threshold", type=float, nargs='?', const=0.2, default=False)
+    parser.add_argument("-test_defuant", action='store_true',
+                        help='Run test functions for the defuant model')
+    parser.add_argument("-test_ising", action='store_true')
+    parser.add_argument("-ising_model", default=False, action = "store_true")
+    parser.add_argument("-external", type=float, nargs='?', default=False, const=0)
+    parser.add_argument("-alpha", type=float, nargs='?', default=False, const=1)
+    parser.add_argument("-use_network", default=False, nargs='?', const=100, type=int)
+
+    args = parser.parse_args()
+
+    return args
+
+def main():
+    args = argparsing()
+
+    if args.network:
+        network_size = args.network
+        prob = random.randint(1, 10) / 10
+        network = Network()
+        network.make_random_network(network_size, prob)
+        print("Random Network:")
+        print(network.get_mean_path_length())
+        print(network.get_mean_clustering())
+        print(network.get_mean_degree())
+
+    if args.small_world:
+        network_size = args.small_world
+        re_wire_size = args.re_wire
+        network = Network()
+        network.make_small_world_network(network_size, re_wire_size)
+        print("Small-World Network:")
+        print(network.get_mean_path_length())
+        print(network.get_mean_clustering())
+        print(network.get_mean_degree())
+
+    if args.ring_network:
+        ring_network_size = args.ring_network
+        network = Network()
+        network.make_ring_network(ring_network_size)
+        print("Ring Network:")
+        print(network.get_mean_path_length())
+        print(network.get_mean_clustering())
+        print(network.get_mean_degree())
+
+    if args.defuant:
+        if args.use_network:
+            defuant_main_task_5(args.use_network, args.beta, args.threshold)
+        else:
+            defuant_main(args.beta, args.threshold)
+
+    if args.ising_model:
+        num_steps = 100
+        population = np.random.choice([-1, 1], size=(100, 100))
+        run_ising_simulation(population, num_steps, args.external, args.alpha)
+
+    if args.test_defuant:
+        test_defuant()
+
+    if args.test_ising:
+        test_ising()
+
 
 
 if __name__ == "__main__":
