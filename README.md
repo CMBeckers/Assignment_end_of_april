@@ -44,6 +44,7 @@ For Task 4.) you can enter the following flags into the command line to run this
 
 For Task 5.) you can enter the following flags into the command line to run this model:
 	-defuant -use_network 10 #This should solve the defuant model on a small world network of size 10.
+ 	-defuant -use_network #The default value is set to 100, which gives a better clearer and graph.
 
 
 
