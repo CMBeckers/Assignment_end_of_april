@@ -626,7 +626,7 @@ def argparsing():
     parser.add_argument("-test_network", action="store_true", default=False)
     parser.add_argument('-small_world', dest='small_world', type=int, nargs='?', const=10, default=False,
                         help='Number of nodes in a small-world network (default: 10)')
-    parser.add_argument('-re-wire', dest='re_wire', metavar='p', type=float, default=0.2,
+    parser.add_argument('-re_wire', dest='re_wire', metavar='p', type=float, default=0.2,
                         help='Rewiring probability for small-world network (default: 0.2)')
     parser.add_argument("-ring_network", type=int, nargs='?', const=10, default=False,
                         help='Number of nodes in a ring network (default: 10)')
