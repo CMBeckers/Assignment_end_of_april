@@ -195,6 +195,8 @@ class Network:
                 if np.random.random() < connection_probability:
                     node.connections[neighbour_index] = 1
                     self.nodes[neighbour_index].connections[index] = 1
+
+	
     def make_ring_network(self, NR, neighbour_range=1):
         """
         This function creates a ring network of size NR nodes with each node connected to its immediate neighbours on
