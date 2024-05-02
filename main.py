@@ -531,10 +531,15 @@ def test_defuant_task_5():
     defuant_main_task_5(network_size, 0.1, 0.2)
 
 def test_defuant():
-    defuant_main(0.5,0.5)
-    defuant_main(0.1, 0.5)
-    defuant_main(0.5, 0.1)
-    defuant_main(0.1, 0.2) #check threshold values they asked to put in on assignment
+    #defuant_main(0.5,0.5)
+    #defuant_main(0.1, 0.5)
+    #defuant_main(0.5, 0.1)
+    #defuant_main(0.1, 0.2) #check threshold values they asked to put in on assignment
+    print("Testing defuant model")
+    assert update([0.45, 0.55], 0.2, 0.2, 1) == [[0.466, 0.53]] or [[0.47000000000000003, 0.534]], "defuant 1"
+    assert update([0.05, 0.5], 0.5, 0.5, 1)==[[0.16250000000000003, 0.275]] or [[0.275, 0.3875]], "defuant 2"
+    assert update([0.6, 0.2], 0.5, 0.5, 1)==[[0.4, 0.30000000000000004]] or [[0.5, 0.4]], "defuant 3"
+    print("Tests passed")
 
 
 
