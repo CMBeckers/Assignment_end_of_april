@@ -634,6 +634,8 @@ def test_ising():
     assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
 
     print("Tests passed")
+
+
 def argparsing():
     parser = argparse.ArgumentParser()
 
