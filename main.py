@@ -195,32 +195,64 @@ class Network:
                 if np.random.random() < connection_probability:
                     node.connections[neighbour_index] = 1
                     self.nodes[neighbour_index].connections[index] = 1
-    def make_ring_network(self, N, neighbour_range=1):
+    def make_ring_network(self, NR, neighbour_range=1):
+        """
+        This function creates a ring network of size NR nodes with each node connected to its immediate neighbours on
+        each side. Like the random network function, it uses lists to represent the connections between each node and
+        its immediate neighbours, where zeroes represent no connection and ones represent a connection. Here again, the
+        position of each element in the lists represent the node index, therefore, the positioning stays consistent.
+
+        Input: self (current instance of the class), number of nodes NR, neighbour_range (here indicating the immediate
+        neighbours)
+        Output: ring network composed of lists, describing the connections of each individual node to other nodes
+        """
+
         self.nodes = []
-        for node_number in range(N):
+
+        #for loop iterates over each node and makes a connections list for each node with no connections to other nodes
+        for node_index in range(NR):
             value = np.random.random()
-            connections = [0 for _ in range(N)]
-            self.nodes.append(Node(value, node_number, connections))
+            connections = [0 for _ in range(NR)] #no connections are indicated as only zeroes in the list
+            #new node object is created storing the value, index and connections of each node
+            self.nodes.append(Node(value, node_index, connections))
 
+        #first for loop iterates over each node in the network and accesses its index
         for (index, node) in enumerate(self.nodes):
+            #nested for loop determines the neighbours of the current node but also iterates over itself
             for offset in range(-neighbour_range, neighbour_range + 1):
-                if offset != 0:  # Skip connecting a node to itself
-                    neighbor_index = (index + offset) % N
-                    node.connections[neighbor_index] = 1
-                    self.nodes[neighbor_index].connections[index] = 1
+                if offset != 0 : #Skip connecting a node to itself
+                    neighbor_index = (index + offset) % NR #calculates neigbouring nodes indices
+                    node.connections[neighbor_index] = 1 #updates connection list by making neighbouring zeroes to ones
+                    self.nodes[neighbor_index].connections[index] = 1 #updates connection lists of all appropriate nodes
 
+
+    #creates a small world network of size N nodes, with a default re-wiring probability 0.2
     def make_small_world_network(self, N, rewiring_prob=0.2):
-        self.make_ring_network(N)  # Call make_ring_network without passing self
+        """
+        This function uses the ring network function to create a small world network of size N nodes with a default
+        probability of 0.2 to re-wire the connections between the nodes.
+        Input: number of nodes N, re-wiring probability between nodes (with a default value of 0.2 unless different
+        value is parsed)
+        Input: self (current instance of the class), number of nodes N, rewiring_pron (here indicating the probability
+        that each individual connections will be re-wired (default probability set to 0.2))
+        Output: small world network composed of lists, describing the connections of each individual node to other nodes
+        """
+        self.make_ring_network(N)  #create base structure for network with make_ring_network function of size N nodes
 
+        #iterates over each node in network and stores node information in the variable node
         for index in range(len(self.nodes)):
             node = self.nodes[index]
+            #iterates over connection list of current node and stores indices of nodes it is connected to in new list
             connection_indexes = [indx for indx in range(N) if node.connections[indx] == 1]
             for connection_index in connection_indexes:
                 if np.random.random() < rewiring_prob:
+                    #when if statement holds, the connection at hand is removed and the connections list is updated
                     node.connections[connection_index] = 0
                     self.nodes[connection_index].connections[index] = 0
 
+                    #randomly selects new node to connect to besides itself and the nodes already connected to
                     random_node = np.random.choice([indx for indx in range(N) if indx != index and indx not in connection_indexes])
+                    #connects current node to randomly selected node and updates connections list
                     self.nodes[random_node].connections[index] = 1
                     node.connections[random_node] = 1
 
