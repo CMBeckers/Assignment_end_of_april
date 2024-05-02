@@ -1,8 +1,12 @@
+#takes command-line arguments entered in terminal and enters them into the functions as required
 def main():
+    """
+    The main function runs the functions called with the flags entered into the command line and inserts the values specified.
+    """
     #initialise parser
     parser = argparse.ArgumentParser(description='Process some integers.')
-    #create flag for ring network with default value of NR = 0, so no ring network is created unless called
-    parser.add_argument('-ring_network', dest='ring', metavar='NR', type=int, default = 0, help='number N of nodes in ring network')
+    #create flag for ring network with default value of NR = False, so no ring network is created unless called
+    parser.add_argument('-ring_network', dest='ring', metavar='NR', type=int, const = 10, default = False, nargs = '?', help='number N of nodes in ring network')
     #create flag for small world network with default value of N = 10
     parser.add_argument('-small_world', dest='smallworld', metavar='N', type=int, default=10, help='number N of nodes in small-world network')
     #create flag for the re-wiring probability of the small world network with default value of p = 0.2
