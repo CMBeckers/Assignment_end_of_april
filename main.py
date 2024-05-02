@@ -57,9 +57,6 @@ class Node:
 
 
 class queue:
-	"""
- 	This class creates a queue structure for later use.
-  	"""
     def __init__(self):
         self.queue = []
 
@@ -78,8 +75,6 @@ class Network:
     This class holds the functions to create the different networks and also the function to the plot and visualise
     the networks created.
     """
-	
-	#each network is made up of a given number of nodes
     def __init__(self, nodes=None):
         if nodes is None:
             self.nodes = []
@@ -87,9 +82,6 @@ class Network:
             self.nodes = nodes
 
     def mean(self, list):
-	    	"""
-		This function determines the mean of value of a provided list.     
-		"""
         total = 0
         for item in list:
             total += item  # all items will be of type int
@@ -209,8 +201,6 @@ class Network:
                 if np.random.random() < connection_probability:
                     node.connections[neighbour_index] = 1
                     self.nodes[neighbour_index].connections[index] = 1
-
-
     def make_ring_network(self, NR, neighbour_range=1):
         """
         This function creates a ring network of size NR nodes with each node connected to its immediate neighbours on
@@ -242,7 +232,7 @@ class Network:
                     self.nodes[neighbor_index].connections[index] = 1 #updates connection lists of all appropriate nodes
 
 
-    
+    #creates a small world network of size N nodes, with a default re-wiring probability 0.2
     def make_small_world_network(self, N, rewiring_prob=0.2):
         """
         This function uses the ring network function to create a small world network of size N nodes with a default
@@ -300,7 +290,6 @@ class Network:
                     ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
         plt.pause(1)
         plt.close()
-
 
 '''
 code for task 1
@@ -394,7 +383,6 @@ def run_ising_simulation(population, num_steps=100, external=0, alpha=1):
         population[:] = population_copy
         plt.pause(0.1)
 
-	
 '''
 Code for task 2
 '''
@@ -450,7 +438,6 @@ def defuant_main(beta, threshold):
     opinion_change = update(spawn(num_people), beta, threshold,iterations)
     plot_opinion(opinion_change,iterations,beta,threshold)
 
-	
 '''
 code for task 5
 '''
@@ -630,13 +617,7 @@ def test_ising():
     assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
 
     print("Tests passed")
-
-
 def argparsing():
-	"""
- 	This function takes the flags called and command-line arguments entered in the terminal and enters them into the specific functions as required and 
-  	runs the functions called.
-  	"""
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-network", type=int, nargs='?', const=10, default=False,
