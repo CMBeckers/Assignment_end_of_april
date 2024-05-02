@@ -52,7 +52,6 @@ class Node:
         return children
 
 
-
 class queue:
     def __init__(self):
         self.queue = []
@@ -107,7 +106,7 @@ class Network:
             visited = set()
             neighbour_indices = node.get_neighbours()
             number_of_neighbours = len(neighbour_indices)
-            if number_of_neighbours < 2: # two neighbours required for potential clustering
+            if number_of_neighbours < 2:  # two neighbours required for potential clustering
                 coefficient_per_node.append(0)
                 continue
             else:
@@ -166,7 +165,7 @@ class Network:
         '''
         lengths = []
         means = []
-        for value_1 in range(0, len(self.nodes)-1):
+        for value_1 in range(0, len(self.nodes) - 1):
             lengths.append([])
             for value_2 in range(0, len(self.nodes)):
                 if value_2 == value_1:
@@ -196,7 +195,6 @@ class Network:
                     node.connections[neighbour_index] = 1
                     self.nodes[neighbour_index].connections[index] = 1
 
-	
     def make_ring_network(self, NR, neighbour_range=1):
         """
         This function creates a ring network of size NR nodes with each node connected to its immediate neighbours on
@@ -211,24 +209,25 @@ class Network:
 
         self.nodes = []
 
-        #for loop iterates over each node and makes a connections list for each node with no connections to other nodes
+        # for loop iterates over each node and makes a connections list for each node with no connections to other nodes
         for node_index in range(NR):
             value = np.random.random()
-            connections = [0 for _ in range(NR)] #no connections are indicated as only zeroes in the list
-            #new node object is created storing the value, index and connections of each node
+            connections = [0 for _ in range(NR)]  # no connections are indicated as only zeroes in the list
+            # new node object is created storing the value, index and connections of each node
             self.nodes.append(Node(value, node_index, connections))
 
-        #first for loop iterates over each node in the network and accesses its index
+        # first for loop iterates over each node in the network and accesses its index
         for (index, node) in enumerate(self.nodes):
-            #nested for loop determines the neighbours of the current node but also iterates over itself
+            # nested for loop determines the neighbours of the current node but also iterates over itself
             for offset in range(-neighbour_range, neighbour_range + 1):
-                if offset != 0 : #Skip connecting a node to itself
-                    neighbor_index = (index + offset) % NR #calculates neigbouring nodes indices
-                    node.connections[neighbor_index] = 1 #updates connection list by making neighbouring zeroes to ones
-                    self.nodes[neighbor_index].connections[index] = 1 #updates connection lists of all appropriate nodes
+                if offset != 0:  # Skip connecting a node to itself
+                    neighbor_index = (index + offset) % NR  # calculates neigbouring nodes indices
+                    node.connections[
+                        neighbor_index] = 1  # updates connection list by making neighbouring zeroes to ones
+                    self.nodes[neighbor_index].connections[
+                        index] = 1  # updates connection lists of all appropriate nodes
 
-
-    #creates a small world network of size N nodes, with a default re-wiring probability 0.2
+    # creates a small world network of size N nodes, with a default re-wiring probability 0.2
     def make_small_world_network(self, N, rewiring_prob=0.2):
         """
         This function uses the ring network function to create a small world network of size N nodes with a default
@@ -239,22 +238,23 @@ class Network:
         that each individual connections will be re-wired (default probability set to 0.2))
         Output: small world network composed of lists, describing the connections of each individual node to other nodes
         """
-        self.make_ring_network(N)  #create base structure for network with make_ring_network function of size N nodes
+        self.make_ring_network(N)  # create base structure for network with make_ring_network function of size N nodes
 
-        #iterates over each node in network and stores node information in the variable node
+        # iterates over each node in network and stores node information in the variable node
         for index in range(len(self.nodes)):
             node = self.nodes[index]
-            #iterates over connection list of current node and stores indices of nodes it is connected to in new list
+            # iterates over connection list of current node and stores indices of nodes it is connected to in new list
             connection_indexes = [indx for indx in range(N) if node.connections[indx] == 1]
             for connection_index in connection_indexes:
                 if np.random.random() < rewiring_prob:
-                    #when if statement holds, the connection at hand is removed and the connections list is updated
+                    # when if statement holds, the connection at hand is removed and the connections list is updated
                     node.connections[connection_index] = 0
                     self.nodes[connection_index].connections[index] = 0
 
-                    #randomly selects new node to connect to besides itself and the nodes already connected to
-                    random_node = np.random.choice([indx for indx in range(N) if indx != index and indx not in connection_indexes])
-                    #connects current node to randomly selected node and updates connections list
+                    # randomly selects new node to connect to besides itself and the nodes already connected to
+                    random_node = np.random.choice(
+                        [indx for indx in range(N) if indx != index and indx not in connection_indexes])
+                    # connects current node to randomly selected node and updates connections list
                     self.nodes[random_node].connections[index] = 1
                     node.connections[random_node] = 1
 
@@ -286,67 +286,70 @@ class Network:
                     ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
         plt.pause(1)
 
+
 '''
 code for task 1
 '''
+
+
 def get_ops(population, i, j):
-	"""
-	Function to find the neighbours above, below, to the left and to the
-	right of each cell. The code makes sure to wrap around the grid to
-	make sure cells on the edge still have four neighbours
-	:param population: Grid representing the population of people
-	:param i: Represents the horizontal position of a cell
-	:param j: Represents the vertical position of a cell
-	:return: List of opinions of the surrounding neighbours of each cell
-	"""
-	x, y = population.shape
-	neighbour_opinions = []
-	neighbour_opinions.append(population[i-1, j])
-	neighbour_opinions.append(population[(i+1)%x, j])
-	neighbour_opinions.append(population[i, (j+1)%y])
-	neighbour_opinions.append(population[i, j-1])
-	return neighbour_opinions
+    """
+    Function to find the neighbours above, below, to the left and to the
+    right of each cell. The code makes sure to wrap around the grid to
+    make sure cells on the edge still have four neighbours
+    :param population: Grid representing the population of people
+    :param i: Represents the horizontal position of a cell
+    :param j: Represents the vertical position of a cell
+    :return: List of opinions of the surrounding neighbours of each cell
+    """
+    x, y = population.shape
+    neighbour_opinions = []
+    neighbour_opinions.append(population[i - 1, j])
+    neighbour_opinions.append(population[(i + 1) % x, j])
+    neighbour_opinions.append(population[i, (j + 1) % y])
+    neighbour_opinions.append(population[i, j - 1])
+    return neighbour_opinions
 
 
 def calculate_agreement(population, row, col, external=0.0):
-	"""
-	Function to calculate the level of agreement between a cell and
-	its neighbours
-	:param population: Grid representing the population of people
-	:param row: Row of the grid
-	:param col: Column of the grid
-	:param external: External influence on a cells voting opinion
-	:return: Total sum of the agreement of a cells neighbours
-	"""
-	current_value = population[row, col]
-	total_agreement = 0
-	opinion_list = get_ops(population, row, col)
-	for opinion in opinion_list:
-		total_agreement += current_value * opinion
-	total_agreement += external * current_value
-	return total_agreement
+    """
+    Function to calculate the level of agreement between a cell and
+    its neighbours
+    :param population: Grid representing the population of people
+    :param row: Row of the grid
+    :param col: Column of the grid
+    :param external: External influence on a cells voting opinion
+    :return: Total sum of the agreement of a cells neighbours
+    """
+    current_value = population[row, col]
+    total_agreement = 0
+    opinion_list = get_ops(population, row, col)
+    for opinion in opinion_list:
+        total_agreement += current_value * opinion
+    total_agreement += external * current_value
+    return total_agreement
 
 
 def ising_step(population, external=0.0, alpha=10):
-	"""
-	Performs a single update of the ising function by choosing a
-	random cell and updating its value based on the calculation of
-	the agreement of its neighbours
-	:param population: Grid representing the population of people
-	:param external: External influence on a cells voting opinion
-	:param alpha: Tolerance of those who disagree with their neighbours within the society
-	"""
-	n_rows, n_cols = population.shape
-	row = np.random.randint(0, n_rows)
-	col = np.random.randint(0, n_cols)
-	agreement = calculate_agreement(population, row, col, external=0.0)
+    """
+    Performs a single update of the ising function by choosing a
+    random cell and updating its value based on the calculation of
+    the agreement of its neighbours
+    :param population: Grid representing the population of people
+    :param external: External influence on a cells voting opinion
+    :param alpha: Tolerance of those who disagree with their neighbours within the society
+    """
+    n_rows, n_cols = population.shape
+    row = np.random.randint(0, n_rows)
+    col = np.random.randint(0, n_cols)
+    agreement = calculate_agreement(population, row, col, external=0.0)
 
-	if agreement < 0:
-		population[row, col] *= -1
-	elif alpha:
-		p = math.e ** (-agreement / alpha)
-		if random.random() < p:
-			population[row, col] *= -1
+    if agreement < 0:
+        population[row, col] *= -1
+    elif alpha:
+        p = math.e ** (-agreement / alpha)
+        if random.random() < p:
+            population[row, col] *= -1
 
 
 def plot_ising(im, population):
@@ -361,6 +364,7 @@ def plot_ising(im, population):
 
     # Pause to display the updated plot (adjust as needed)
     plt.pause(0.01)
+
 
 def run_ising_simulation(population, num_steps=100, external=0.0, alpha=10):
     """
@@ -383,13 +387,17 @@ def run_ising_simulation(population, num_steps=100, external=0.0, alpha=10):
         population[:] = population_copy
         plt.pause(0.1)
 
+
 '''
 Code for task 2
 '''
+
+
 def spawn(num_people):
     return np.random.rand(num_people)
 
-def update(opinion,beta,threshold,iterations):
+
+def update(opinion, beta, threshold, iterations):
     opinion_change = []
     for i in range(iterations):
         n = np.random.randint(len(opinion))
@@ -398,24 +406,26 @@ def update(opinion,beta,threshold,iterations):
         elif n == (len(opinion) - 1):
             neighbour = n - 1
         else:
-            neighbour = (n+random.choice([-1,1]))
+            neighbour = (n + random.choice([-1, 1]))
         difference = opinion[n] - opinion[neighbour]
 
         if abs(difference) < threshold:
             opinion[n] += (beta * (opinion[neighbour] - opinion[n]))
-            opinion[neighbour] += (beta * (opinion[n] - opinion[neighbour])) #most important part so far
-        opinion_change.append(opinion.copy()) #gives you a copy of the same list, not same as deep copy (compound list)
+            opinion[neighbour] += (beta * (opinion[n] - opinion[neighbour]))  # most important part so far
+        opinion_change.append(
+            opinion.copy())  # gives you a copy of the same list, not same as deep copy (compound list)
     return opinion_change
+
 
 def plot_opinion(opinion_change, iterations, beta, threshold):
     fig = plt.figure()
-    #first sublot
+    # first sublot
     ax1 = fig.add_subplot(1, 2, 1)
     ax1.hist(opinion_change[-1], bins=10)
     ax1.set_xlabel('Opinion')
     ax1.set_ylabel('Number')
     ax1.set_xticks(np.arange(0, 1.1, 0.2))
-    #second subplot
+    # second subplot
     ax2 = fig.add_subplot(1, 2, 2)
     ax2.plot(range(iterations), opinion_change, 'ro')
     ax2.set_ylabel('Opinion')
@@ -424,23 +434,29 @@ def plot_opinion(opinion_change, iterations, beta, threshold):
     plt.tight_layout()
     plt.show()
 
+
 def defuant_main(beta, threshold):
     num_people = 100
     iterations = 10000
-    opinion_change = update(spawn(num_people), beta, threshold,iterations)
-    plot_opinion(opinion_change,iterations,beta,threshold)
+    opinion_change = update(spawn(num_people), beta, threshold, iterations)
+    plot_opinion(opinion_change, iterations, beta, threshold)
+
 
 '''
 code for task 5
 '''
+
+
 def spawning(num_people):
     return np.random.rand(num_people)
+
 
 def mean(list):
     total = 0
     for item in list:
         total += item  # all items will be of type int
     return total / len(list)
+
 
 def updating(network, beta, threshold, iterations):
     opinion_change = []
@@ -473,13 +489,13 @@ def updating(network, beta, threshold, iterations):
 
 def plot_opinions(opinion_change, iterations, beta, threshold):
     fig = plt.figure()
-    #first sublot
+    # first sublot
     ax1 = fig.add_subplot(1, 2, 1)
     ax1.hist(opinion_change[-1], bins=10)
     ax1.set_xlabel('Opinion')
     ax1.set_ylabel('Number')
     ax1.set_xticks(np.arange(0, 1.1, 0.2))
-    #second subplot
+    # second subplot
     ax2 = fig.add_subplot(1, 2, 2)
     ax2.plot(range(iterations), opinion_change, 'ro')
     ax2.set_ylabel('Opinion')
@@ -487,6 +503,7 @@ def plot_opinions(opinion_change, iterations, beta, threshold):
     fig.suptitle(f'Coupling: {beta}, Threshold: {threshold}')
     plt.tight_layout()
     plt.pause(1)
+
 
 def plot_opinions_over_time(opinions_over_time):
     means = [mean(opinion) for opinion in opinions_over_time]
@@ -498,9 +515,11 @@ def plot_opinions_over_time(opinions_over_time):
     plt.ylabel('Mean Opinion')
     plt.title('Mean Opinion over Time')
     plt.show()
+
+
 def defuant_main_task_5(network_size, beta, threshold):
     iterations = 100
-    rewiring_prob = random.randint(1, 10)/10
+    rewiring_prob = random.randint(1, 10) / 10
     network = Network()
     network.make_small_world_network(network_size, rewiring_prob)
     opinion_change = updating(network, beta, threshold, iterations)
@@ -509,17 +528,17 @@ def defuant_main_task_5(network_size, beta, threshold):
 
 def test_defuant_task_5():
     network_size = 100
-    defuant_main_task_5(network_size, 0.5,0.5)
+    defuant_main_task_5(network_size, 0.5, 0.5)
     defuant_main_task_5(network_size, 0.1, 0.5)
-    defuant_main_task_5(network_size,0.5, 0.1)
+    defuant_main_task_5(network_size, 0.5, 0.1)
     defuant_main_task_5(network_size, 0.1, 0.2)
 
+
 def test_defuant():
-    defuant_main(0.5,0.5)
+    defuant_main(0.5, 0.5)
     defuant_main(0.1, 0.5)
     defuant_main(0.5, 0.1)
-    defuant_main(0.1, 0.2) #check threshold values they asked to put in on assignment
-
+    defuant_main(0.1, 0.2)  # check threshold values they asked to put in on assignment
 
 
 def test_networks():
@@ -569,6 +588,7 @@ def test_networks():
 
     print("All tests passed")
 
+
 def test_ising():
     '''
     This function will test the calculate_agreement function in the Ising model
@@ -576,31 +596,33 @@ def test_ising():
 
     print("Testing ising model calculations")
     population = -np.ones((3, 3))
-    assert(calculate_agreement(population,1,1)==4), "Test 1"
+    assert (calculate_agreement(population, 1, 1) == 4), "Test 1"
 
     population[1, 1] = 1.
-    assert(calculate_agreement(population,1,1)==-4), "Test 2"
+    assert (calculate_agreement(population, 1, 1) == -4), "Test 2"
 
     population[0, 1] = 1.
-    assert(calculate_agreement(population,1,1)==-2), "Test 3"
+    assert (calculate_agreement(population, 1, 1) == -2), "Test 3"
 
     population[1, 0] = 1.
-    assert(calculate_agreement(population,1,1)==0), "Test 4"
+    assert (calculate_agreement(population, 1, 1) == 0), "Test 4"
 
     population[2, 1] = 1.
-    assert(calculate_agreement(population,1,1)==2), "Test 5"
+    assert (calculate_agreement(population, 1, 1) == 2), "Test 5"
 
     population[1, 2] = 1.
-    assert(calculate_agreement(population,1,1)==4), "Test 6"
+    assert (calculate_agreement(population, 1, 1) == 4), "Test 6"
 
     "Testing external pull"
     population = -np.ones((3, 3))
-    assert(calculate_agreement(population,1,1,1)==3), "Test 7"
-    assert(calculate_agreement(population,1,1,-1)==5), "Test 8"
-    assert(calculate_agreement(population,1,1,10)==-6), "Test 9"
-    assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
+    assert (calculate_agreement(population, 1, 1, 1) == 3), "Test 7"
+    assert (calculate_agreement(population, 1, 1, -1) == 5), "Test 8"
+    assert (calculate_agreement(population, 1, 1, 10) == -6), "Test 9"
+    assert (calculate_agreement(population, 1, 1, -10) == 14), "Test 10"
 
     print("Tests passed")
+
+
 def argparsing():
     parser = argparse.ArgumentParser()
 
@@ -612,14 +634,14 @@ def argparsing():
                         help='Rewiring probability for small-world network (default: 0.2)')
     parser.add_argument("-ring_network", type=int, nargs='?', const=10, default=False,
                         help='Number of nodes in a ring network (default: 10)')
-    parser.add_argument("-defuant", default=False ,action="store_true",
+    parser.add_argument("-defuant", default=False, action="store_true",
                         help='Run the defuant model with optional parameters: -beta <value>, -threshold <value>')
     parser.add_argument("-beta", type=float, nargs='?', default=False, const=0.2)
     parser.add_argument("-threshold", type=float, nargs='?', const=0.2, default=False)
     parser.add_argument("-test_defuant", action='store_true',
                         help='Run test functions for the defuant model')
     parser.add_argument("-test_ising", action='store_true')
-    parser.add_argument("-ising_model", default=False, action = "store_true")
+    parser.add_argument("-ising_model", default=False, action="store_true")
     parser.add_argument("-external", type=float, nargs='?', default=False, const=0)
     parser.add_argument("-alpha", type=float, nargs='?', default=False, const=1)
     parser.add_argument("-use_network", default=False, nargs='?', const=100, type=int)
@@ -627,6 +649,7 @@ def argparsing():
     args = parser.parse_args()
 
     return args
+
 
 def main():
     args = argparsing()
@@ -678,7 +701,5 @@ def main():
         test_ising()
 
 
-
 if __name__ == "__main__":
     main()
-
