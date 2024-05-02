@@ -7,10 +7,10 @@ import math
 
 
 class Node:
-	"""
- 	This class holds the information of each node: That would be the nodes' index, value, connections
-    	with other nodes, and also the neighbours, the children as well as the parents of the current node.
-  	"""
+    """
+    This class holds the information of each node: That would be the nodes' index, value, connections
+    with other nodes, and also the neighbours, the children as well as the parents of the current node.
+    """
     def __init__(self, value, number, connections=None):
         self.index = number
         self.connections = connections
@@ -71,11 +71,10 @@ class queue:
 
 
 class Network:
-	"""
-    	This class holds the functions to create the different networks and also the function to the plot and visualise
-    	the networks created.
-    	"""
-	
+    """
+    This class holds the functions to create the different networks and also the function to the plot and visualise
+    the networks created.
+    """
     def __init__(self, nodes=None):
         if nodes is None:
             self.nodes = []
@@ -290,6 +289,7 @@ class Network:
 
                     ax.plot((node_x, neighbour_x), (node_y, neighbour_y), color='black')
         plt.pause(1)
+        plt.close()
 
 '''
 code for task 1
@@ -362,39 +362,6 @@ def plot_ising(im, population):
     im.set_data(new_im)
     plt.pause(0.1)
 
-
-def test_ising():
-    '''
-    This function will test the calculate_agreement function in the Ising model
-    '''
-
-    print("Testing ising model calculations")
-    population = -np.ones((3, 3))
-    assert(calculate_agreement(population,1,1)==4), "Test 1"
-
-    population[1, 1] = 1.
-    assert(calculate_agreement(population,1,1)==-4), "Test 2"
-
-    population[0, 1] = 1.
-    assert(calculate_agreement(population,1,1)==-2), "Test 3"
-
-    population[1, 0] = 1.
-    assert(calculate_agreement(population,1,1)==0), "Test 4"
-
-    population[2, 1] = 1.
-    assert(calculate_agreement(population,1,1)==2), "Test 5"
-
-    population[1, 2] = 1.
-    assert(calculate_agreement(population,1,1)==4), "Test 6"
-
-    "Testing external pull"
-    population = -np.ones((3, 3))
-    assert(calculate_agreement(population,1,1,1)==3), "Test 7"
-    assert(calculate_agreement(population,1,1,-1)==5), "Test 8"
-    assert(calculate_agreement(population,1,1,10)==-6), "Test 9"
-    assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
-
-    print("Tests passed")
 def run_ising_simulation(population, num_steps=100, external=0, alpha=1):
     """
     Runs the Ising simulation for a specified number of steps and updates the plot
@@ -423,6 +390,10 @@ def spawn(num_people):
     return np.random.rand(num_people)
 
 def update(opinion,beta,threshold,iterations):
+    '''
+    updates opinion of random i, j in grid based on neighbours opinions
+    :return: opinion changes of all elements of the grid
+    '''
     opinion_change = []
     for i in range(iterations):
         n = np.random.randint(len(opinion))
@@ -441,6 +412,10 @@ def update(opinion,beta,threshold,iterations):
     return opinion_change
 
 def plot_opinion(opinion_change, iterations, beta, threshold):
+    '''
+    plots opinions over time
+    '''
+
     fig = plt.figure()
     #first sublot
     ax1 = fig.add_subplot(1, 2, 1)
@@ -476,13 +451,17 @@ def mean(list):
     return total / len(list)
 
 def updating(network, beta, threshold, iterations):
+    '''
+    Function that updated the opinions of nodes based on the opinions of its neighbours
+    :return: opinion change of nodes over time
+    '''
     opinion_change = []
 
     for i in range(iterations):
         opinion_snapshot = []
 
         for node in network.nodes:
-            try:
+            try: # some nodes may not have neighbours
                 neighbour_index = random.choice(node.get_neighbours())
                 neighbour = network.nodes[neighbour_index]
                 difference = node.value - neighbour.value
@@ -493,7 +472,7 @@ def updating(network, beta, threshold, iterations):
 
                 opinion_snapshot.append(node.value)
 
-            except IndexError:
+            except IndexError: # append original opinion
                 opinion_snapshot.append(node.value)
 
         opinion_change.append(opinion_snapshot)
@@ -522,6 +501,10 @@ def plot_opinions(opinion_change, iterations, beta, threshold):
     plt.pause(1)
 
 def plot_opinions_over_time(opinions_over_time):
+    '''
+    plots the means of the opinions at each time step over time
+    returns a graph of the change in opinions over time
+    '''
     means = [mean(opinion) for opinion in opinions_over_time]
     time = []
     for value in range(0, len(opinions_over_time)):
@@ -634,8 +617,6 @@ def test_ising():
     assert(calculate_agreement(population,1,1, -10)==14), "Test 10"
 
     print("Tests passed")
-
-
 def argparsing():
     parser = argparse.ArgumentParser()
 
